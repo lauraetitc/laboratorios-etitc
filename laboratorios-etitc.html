@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Laboratorios · ETITC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12241A;
+    --dark-green:#1B3B24;
+    --bright-green:#5FA82E;
+    --sage:#D9E6DC;
+    --paper:#F7F5EF;
+    --paper-2:#EFEBE0;
+    --line: rgba(18,36,26,0.14);
+    --amber:#C97A2E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(180deg, var(--paper) 0%, var(--paper) 100%);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* subtle blueprint grid, technical/lab feel */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity:0.35;
+    pointer-events:none;
+    z-index:0;
+  }
+  .stage{position:relative; z-index:1;}
+
+  h1,h2,h3, .display{
+    font-family:'Fraunces', serif;
+    letter-spacing:-0.01em;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace; letter-spacing:0.02em;}
+
+  /* ---------- GATE ---------- */
+  #gate{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .gate-card{
+    width:100%;
+    max-width:420px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:44px 38px 36px;
+    box-shadow:0 1px 0 rgba(18,36,26,0.04);
+    position:relative;
+  }
+  .gate-card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:5px;
+    background: linear-gradient(90deg, var(--dark-green), var(--bright-green));
+  }
+  .seal{
+    width:56px;height:56px;
+    border:1.5px solid var(--dark-green);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 20px;
+    color:var(--dark-green);
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:20px;
+  }
+  .eyebrow{
+    text-align:center;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:0.14em;
+    color:var(--bright-green);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .gate-card h1{
+    text-align:center;
+    font-size:26px;
+    margin:0 0 8px;
+    color:var(--dark-green);
+  }
+  .gate-sub{
+    text-align:center;
+    font-size:14px;
+    color:#4b564d;
+    margin:0 0 28px;
+    line-height:1.5;
+  }
+  .field-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:#4b564d;
+    margin-bottom:6px;
+    display:block;
+  }
+  #code-input{
+    width:100%;
+    padding:13px 14px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    letter-spacing:0.06em;
+    background:var(--paper);
+    color:var(--ink);
+    outline:none;
+  }
+  #code-input:focus{border-color:var(--bright-green);}
+  #enter-btn{
+    width:100%;
+    margin-top:14px;
+    padding:13px 14px;
+    background:var(--dark-green);
+    color:#fff;
+    border:none;
+    border-radius:2px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  #enter-btn:hover{background:#142e1c;}
+  #gate-error{
+    color:#a4402a;
+    font-size:13px;
+    text-align:center;
+    margin-top:12px;
+    min-height:16px;
+  }
+  .gate-footnote{
+    margin-top:26px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    color:#7a8279;
+    text-align:center;
+    line-height:1.5;
+  }
+
+  /* ---------- PORTAL ---------- */
+  #portal{display:none;}
+  #portal.visible{display:block;}
+
+  header.top{
+    background:var(--dark-green);
+    color:var(--sage);
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  header.top .brand{
+    display:flex;align-items:center;gap:12px;
+  }
+  header.top .seal-sm{
+    width:36px;height:36px;
+    border:1.5px solid var(--sage);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces', serif;font-weight:600;font-size:13px;
+    flex-shrink:0;
+  }
+  header.top .brand-text .name{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    color:#fff;
+    line-height:1.2;
+  }
+  header.top .brand-text .sub{
+    font-size:11px;
+    color:var(--sage);
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+  }
+  header.top .status{
+    font-size:12px;
+    color:var(--sage);
+    font-family:'IBM Plex Mono', monospace;
+    display:flex;align-items:center;gap:8px;
+  }
+  header.top .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--bright-green);
+    display:inline-block;
+  }
+
+  .intro{
+    padding:40px 32px 8px;
+    max-width:900px;
+  }
+  .intro .eyebrow{text-align:left;}
+  .intro h2{
+    font-size:30px;
+    color:var(--dark-green);
+    margin:4px 0 10px;
+  }
+  .intro p{
+    font-size:14.5px;
+    color:#4b564d;
+    line-height:1.6;
+    max-width:640px;
+  }
+
+  .grid{
+    padding:20px 32px 60px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:18px;
+    max-width:1200px;
+  }
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:22px 22px 18px;
+    position:relative;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(18,36,26,0.08);
+  }
+  .card-top{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:14px;
+  }
+  .card-code{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--bright-green);
+    background:var(--sage);
+    padding:3px 8px;
+    border-radius:2px;
+    letter-spacing:0.04em;
+  }
+  .card h3{
+    font-size:18px;
+    color:var(--dark-green);
+    margin:0 0 6px;
+    line-height:1.3;
+  }
+  .card .desc{
+    font-size:12.5px;
+    color:#6b756c;
+    line-height:1.5;
+    margin:0 0 16px;
+    min-height:34px;
+  }
+  .pills{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+  .pill{
+    display:flex;align-items:center;gap:9px;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-size:13px;
+    color:var(--ink);
+    text-decoration:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .pill:hover{border-color:var(--bright-green); background:var(--paper);}
+  .pill svg{flex-shrink:0;}
+  .pill .count{
+    margin-left:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:#8a938a;
+  }
+
+  footer.foot{
+    padding:26px 32px 40px;
+    border-top:1px solid var(--line);
+    max-width:1200px;
+  }
+  footer.foot p{
+    font-size:12px;
+    color:#8a938a;
+    line-height:1.6;
+  }
+  footer.foot .edit-note{
+    background:#FBF6EC;
+    border:1px solid #E7D8B8;
+    color:#8a5a1a;
+    padding:14px 16px;
+    border-radius:2px;
+    font-size:12.5px;
+    line-height:1.6;
+    max-width:640px;
+  }
+
+  @media (max-width:560px){
+    .intro{padding:32px 20px 4px;}
+    .grid{padding:16px 20px 48px;}
+    header.top{padding:18px 20px;}
+    .gate-card{padding:34px 24px 28px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ===== PUERTA DE ACCESO ===== -->
+  <div id="gate">
+    <div class="gate-card">
+      <div class="seal">ET</div>
+      <div class="eyebrow">Acceso restringido</div>
+      <h1>Laboratorios ETITC</h1>
+      <p class="gate-sub">Ingresa el código de acceso institucional compartido por el laboratorio para ver las asignaturas habilitadas.</p>
+
+      <label class="field-label" for="code-input">Código de acceso</label>
+      <input id="code-input" class="mono" type="text" placeholder="••••••••" autocomplete="off">
+      <button id="enter-btn">Ingresar al portal</button>
+      <div id="gate-error"></div>
+
+      <div class="gate-footnote">
+        Este código es temporal. En la siguiente fase el acceso se validará con el correo institucional del docente.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PORTAL ===== -->
+  <div id="portal">
+    <header class="top">
+      <div class="brand">
+        <div class="seal-sm">ET</div>
+        <div class="brand-text">
+          <div class="name">Laboratorios ETITC</div>
+          <div class="sub">Instituto Técnico Central</div>
+        </div>
+      </div>
+      <div class="status"><span class="dot"></span> Sesión de laboratorio activa</div>
+    </header>
+
+    <div class="intro">
+      <div class="eyebrow">Índice de asignaturas</div>
+      <h2>Equipos, guías y prácticas por asignatura</h2>
+      <p>Cada asignatura reúne el material habilitado para el uso de los equipos de laboratorio: video-guías de manejo, guías escritas de práctica y las prácticas propuestas para los estudiantes.</p>
+    </div>
+
+    <div class="grid" id="subject-grid"></div>
+
+    <footer class="foot">
+      <div class="edit-note">
+        <strong>Nota para administración:</strong> las carpetas de abajo son un ejemplo de estructura. Cada tarjeta debe apuntar a la carpeta real (Drive, servidor o carpeta interna) de Videos / Guías / Prácticas de esa asignatura — reemplaza los enlaces marcados como <span class="mono">"#"</span> en el código.
+      </div>
+      <p style="margin-top:16px;">Portal administrado por el equipo de laboratorios · ETITC — Licenciatura en Tecnología</p>
+    </footer>
+  </div>
+</div>
+
+<script>
+  // ---- CONFIGURACIÓN: cambia el código de acceso aquí ----
+  const ACCESS_CODE = "LABETITC2026";
+
+  const ICONS = {
+    video: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 10l5-3v10l-5-3"/><rect x="2" y="6" width="13" height="12" rx="1.5"/></svg>',
+    guia: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 18.5v-14z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>',
+    practica: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2h6M12 2v6l5 9a2 2 0 0 1-1.8 3H8.8A2 2 0 0 1 7 17l5-9"/></svg>'
+  };
+
+  // ---- CONTENIDO: edita esta lista con tus asignaturas reales ----
+  const SUBJECTS = [
+    {
+      code: "PROG-101",
+      name: "Programación Orientada a Objetos (Python)",
+      desc: "Entornos de cómputo y estaciones para prácticas en Google Colab.",
+      videos: 6, guias: 3, practicas: 4
+    },
+    {
+      code: "EMB-204",
+      name: "Sistemas Embebidos y Arduino",
+      desc: "Bancos de trabajo con microcontroladores y sensores.",
+      videos: 8, guias: 5, practicas: 6
+    },
+    {
+      code: "ROB-310",
+      name: "Robótica Aplicada",
+      desc: "Brazo robótico y control por gestos con visión artificial.",
+      videos: 4, guias: 2, practicas: 3
+    },
+    {
+      code: "CIRC-150",
+      name: "Circuitos y Electrónica Básica",
+      desc: "Multímetros, protoboards y fuentes de laboratorio.",
+      videos: 5, guias: 4, practicas: 5
+    },
+    {
+      code: "ALG-220",
+      name: "Complejidad Algorítmica",
+      desc: "Estaciones de cómputo para análisis y visualización con Bokeh.",
+      videos: 3, guias: 3, practicas: 4
+    },
+    {
+      code: "OPT-405",
+      name: "Optimización y Estructuras",
+      desc: "Prácticas guiadas sobre el problema de la mochila y afines.",
+      videos: 2, guias: 2, practicas: 3
+    }
+  ];
+
+  function renderSubjects(){
+    const grid = document.getElementById('subject-grid');
+    grid.innerHTML = SUBJECTS.map(s => `
+      <div class="card">
+        <div class="card-top">
+          <span class="card-code">${s.code}</span>
+        </div>
+        <h3>${s.name}</h3>
+        <p class="desc">${s.desc}</p>
+        <div class="pills">
+          <a class="pill" href="#" target="_blank">${ICONS.video} Videos de uso de equipos <span class="count">${s.videos}</span></a>
+          <a class="pill" href="#" target="_blank">${ICONS.guia} Guías de práctica <span class="count">${s.guias}</span></a>
+          <a class="pill" href="#" target="_blank">${ICONS.practica} Prácticas propuestas <span class="count">${s.practicas}</span></a>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function tryEnter(){
+    const val = document.getElementById('code-input').value.trim();
+    const err = document.getElementById('gate-error');
+    if(val.toUpperCase() === ACCESS_CODE.toUpperCase()){
+      err.textContent = "";
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('portal').classList.add('visible');
+      renderSubjects();
+    } else {
+      err.textContent = "Código incorrecto. Verifica con el laboratorio.";
+    }
+  }
+
+  document.getElementById('enter-btn').addEventListener('click', tryEnter);
+  document.getElementById('code-input').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') tryEnter();
+  });
+</script>
+</body>
+</html>
